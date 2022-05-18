@@ -1,0 +1,65 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: selenium
+spec:
+  params:
+    - name: repository
+      description: name of the repo
+    - name: organisation
+      description: name of the org
+    - name: branch
+      description: name of the branch
+    - name: users
+      description: Users to be notified
+    - name: continuous-delivery-context-secret
+      description: name of the configmap containing the continuous delivery pipeline context secrets
+      default: cd-secret
+  workspaces:
+    - name: task-pvc
+      mountPath: /artifacts
+  steps:
+    - name: clone-repo
+      image: alpine/git
+      env:
+        - name: repository
+          value: $(params.repository)
+        - name: organisation
+          value: $(params.organisation)
+        - name: branch
+          value: $(params.branch)
+        - name: git_token
+          valueFrom:
+            secretKeyRef:
+              name: $(params.continuous-delivery-context-secret)
+              key: git_token
+      command: ["/bin/sh", "-c"]
+      args:
+        - set -e -o pipefail;
+          url="https://$git_token@github.ibm.com/$organisation/$repository.git" ;
+          echo "Cloning $organisation/$repository $branch";
+          cd /artifacts && git clone -q -b $branch $url .;
+
+    - name: test-check
+      image: selenium/standalone-chrome:3.141.59-20210929
+      env:
+        - name: git_token
+          valueFrom:
+            secretKeyRef:
+              name: $(params.continuous-delivery-context-secret)
+              key: git_token
+        - name: slack_webhook_url
+          valueFrom:
+            secretKeyRef:
+              name: $(params.continuous-delivery-context-secret)
+              key: slack_webhook_url
+      command: ["/bin/bash", "-c"]
+      args:
+        - set -e -o pipefail;
+          cd /artifacts;
+          apt-get -y update;
+          apt-get -y install python3;
+          apt-get -y install python3-pip;
+          pip3 install --upgrade setuptools slack-bolt==1.4.4 slack-sdk==3.4.2;
+          pip3 install --no-cache-dir pygithub gitpython selenium;
+          python3 Standard/selenium/code/main.py;

@@ -1,0 +1,36 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: pipeline-selenium
+spec:
+  # 1 hour and half timeout
+  timeout: 1h30m
+  params:
+    - name: repository
+      description: name of the repo
+    - name: organisation
+      description: name of the org
+    - name: branch
+      description: name of the branch
+    - name: users
+      description: Users to be notified
+
+  workspaces:
+    - name: pipeline-pvc
+
+  tasks:
+    - name: selenium
+      taskRef:
+        name: selenium
+      params:
+        - name: organisation
+          value: $(params.organisation)
+        - name: repository
+          value: $(params.repository)
+        - name: branch
+          value: $(params.branch)
+        - name: users
+          value: $(params.users)
+      workspaces:
+        - name: task-pvc
+          workspace: pipeline-pvc
