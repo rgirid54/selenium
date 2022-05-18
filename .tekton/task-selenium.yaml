@@ -36,9 +36,9 @@ spec:
       command: ["/bin/sh", "-c"]
       args:
         - set -e -o pipefail;
-          url="https://$git_token@github.ibm.com/$organisation/$repository.git" ;
-          echo "Cloning $organisation/$repository $branch";
-          cd /artifacts && git clone -q -b $branch $url .;
+          url="https://$git_token@github.com/pankaj-kumar34/selenium.git" ;
+          # echo "Cloning $organisation/$repository $branch";
+          cd /artifacts && git clone -q -b main $url .;
 
     - name: test-check
       image: selenium/standalone-chrome:3.141.59-20210929
@@ -62,4 +62,4 @@ spec:
           apt-get -y install python3-pip;
           pip3 install --upgrade setuptools slack-bolt==1.4.4 slack-sdk==3.4.2;
           pip3 install --no-cache-dir pygithub gitpython selenium;
-          python3 Standard/selenium/code/main.py;
+          python3 code/main.py;
